@@ -399,5 +399,15 @@ function drawRadar(){
 }
 // ===== Init =====
 function ensureInitial(){ ensureSkills(); if(DB.tasks.length===0) genDaily(); if(DB.side.length===0) genSide(); handleLogin(); applyAvatar(); }
-function start(){ ensureInitial(); updateAll(); }
+function start(){ ensureInitial(); updateAll();
+// ==== 新增 API 測試呼叫 ====
+fetch('/api/ping')
+  .then(r => r.json())
+  .then(d => {
+    addNotif("API ts: " + d.ts); // 顯示後端回傳的時間戳
+  })
+  .catch(() => {
+    addNotif(DB.lang === 'zh' ? 'API 測試失敗' : 'API failed');
+  });
+  }
 start();
