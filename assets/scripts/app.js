@@ -1,5 +1,5 @@
 // ===== Storage helper =====
-const STORAGE_KEY = 'one_prof_mvp_step1';
+const STORAGE_KEY = 'one_prof_mvp_step2';
 const SafeStore = (function () {
   let ok = true;
   try {
@@ -100,8 +100,13 @@ const charXPNum = document.getElementById('charXPNum');
 const skillsBox = document.getElementById('skills');
 const btnLang = document.getElementById('btnLang');
 const cardCountA = document.getElementById('cardCountA');
-const avatarImg = document.getElementById('avatarImg');
-const avatarSVG = document.getElementById('avatarSVG');
+
+// 作答區
+const problemTitle = document.getElementById('problemTitle');
+const problemBody = document.getElementById('problemBody');
+const problemExplain = document.getElementById('problemExplain');
+const btnClearAns = document.getElementById('btnClearAns');
+const btnSubmitAns = document.getElementById('btnSubmitAns');
 
 // 個人資料
 const btnApplyBottom = document.getElementById('btnApplyBottom');
@@ -175,27 +180,6 @@ function t(key) {
   return I18N[DB.lang][key] || key;
 }
 
-function renderI18n() {
-  btnViewDashboard.textContent = t('navDash');
-  btnViewCharacter.textContent = t('navChar');
-  btnViewSettings.textContent = t('navProfile');
-  document.getElementById('ttlNotif').textContent = t('notif');
-  document.getElementById('hCharacter').textContent = t('character');
-  btnApplyBottom.textContent = t('apply');
-  btnResetBottom.textContent = t('resetAll');
-  document.getElementById('lblXP').textContent = t('xp');
-  document.getElementById('hSkills').textContent = t('skills');
-  document.getElementById('hProblems').textContent = t('problems');
-  document.getElementById('hDailySub').textContent = t('dailySub');
-  document.getElementById('hShop').textContent = t('shop');
-  document.getElementById('shopDesc').textContent = t('shopDesc');
-  document.getElementById('hProfile').textContent = t('profile');
-  document.getElementById('lblName').textContent = t('name');
-  document.getElementById('lblGrade').textContent = t('grade');
-  document.getElementById('lblRadar').textContent = t('radar');
-  document.getElementById('lblSkillPanel').textContent = t('skillPanel');
-}
-
 // ===== Skills =====
 const SKILL_NAMES = {
   calc: { zh: '運算能力', en: 'Arithmetic' },
@@ -212,15 +196,17 @@ function ensureSkills() {
   });
 }
 
-// ===== Renders =====
+// ===== Render Top =====
 function renderTop() {
   chipUser.textContent = `Lv.${DB.me.level} / ${Math.floor(
     (DB.me.exp / needFor(DB.me.level)) * 100
   )}%`;
   chipCoins.textContent = `${t('coins')} ${DB.me.coins}`;
   chipCards.textContent = `${t('cards')} x${DB.cards.refresh}`;
+  cardCountA.textContent = DB.cards.refresh;
 }
 
+// ===== Render Meta =====
 function renderMeta() {
   meta.innerHTML = `
     <div><span>${t('name')}</span><strong>${DB.me.name || '-'}</strong></div>
@@ -233,6 +219,7 @@ function renderMeta() {
   charXPNum.textContent = pct + '%';
 }
 
+// ===== Render Skills =====
 function renderSkills() {
   skillsBox.innerHTML = '';
   gradeSkillsKeys.forEach((k) => {
@@ -274,7 +261,7 @@ function drawRadar() {
   const values = gradeSkillsKeys.map(
     (k) => DB.skills[k].xp / needFor(DB.skills[k].lvl)
   );
-  ctx.strokeStyle = '#62c8ff';
+  ctx.strokeStyle = '#62c8ff55';
   ctx.beginPath();
   values.forEach((v, i) => {
     const angle = (Math.PI * 2 * i) / values.length - Math.PI / 2;
@@ -287,13 +274,119 @@ function drawRadar() {
   ctx.stroke();
 }
 
+// ===== Render Tasks =====
+function renderTasks() {
+  const tasksBox = document.getElementById('tasks');
+  tasksBox.innerHTML = '';
+  DB.tasks.slice(0, 3).forEach((task) => {
+    const div = document.createElement('div');
+    div.className = 'task';
+    div.innerHTML = `
+      <strong>${task.title[DB.lang]}</strong>
+      <button class="btn small" data-id="${task.id}">${t('apply') || '開始'}</button>
+    `;
+    tasksBox.appendChild(div);
+  });
+  tasksBox.querySelectorAll('button').forEach((btn) =>
+    btn.addEventListener('click', () => startTask(btn.dataset.id))
+  );
+}
+
+function renderSide() {
+  const sideBox = document.getElementById('side');
+  sideBox.innerHTML = '';
+  DB.side.slice(0, 3).forEach((task) => {
+    const div = document.createElement('div');
+    div.className = 'task';
+    div.innerHTML = `
+      <strong>${task.title[DB.lang]}</strong>
+      <button class="btn small" data-id="${task.id}">${t('apply') || '開始'}</button>
+    `;
+    sideBox.appendChild(div);
+  });
+  sideBox.querySelectorAll('button').forEach((btn) =>
+    btn.addEventListener('click', () => startTask(btn.dataset.id))
+  );
+}
+
+// ===== Task Start & Answer =====
+function startTask(id) {
+  const allTasks = [...DB.tasks, ...DB.side];
+  const task = allTasks.find((t) => t.id === id);
+  if (!task) return;
+  DB.currentQ = task;
+  problemTitle.textContent = task.title[DB.lang];
+  problemBody.innerHTML = '';
+
+  if (task.type === 'fill') {
+    problemBody.innerHTML = `<input id="answerInput" placeholder="..." />`;
+  } else if (task.type === 'mc') {
+    task.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn small';
+      btn.textContent = opt[DB.lang];
+      btn.onclick = () => submitAnswer(i + 1);
+      problemBody.appendChild(btn);
+    });
+  }
+}
+
+btnClearAns.onclick = () => {
+  problemBody.innerHTML = '';
+  problemTitle.textContent = t('startHint');
+  DB.currentQ = null;
+};
+
+btnSubmitAns.onclick = () => {
+  if (!DB.currentQ) return;
+  const ans = document.getElementById('answerInput')?.value.trim();
+  if (DB.currentQ.answer == ans) {
+    gainExp(DB.currentQ);
+  } else {
+    alert('答錯了！');
+  }
+};
+
+function submitAnswer(choice) {
+  if (!DB.currentQ) return;
+  if (DB.currentQ.answer == choice) {
+    gainExp(DB.currentQ);
+  } else {
+    alert('答錯了！');
+  }
+}
+
+function gainExp(task) {
+  const exp = task.xp || 5;
+  DB.me.exp += exp;
+  DB.skills[task.skill].xp += exp;
+  DB.notifs.push(`完成任務 +${exp} EXP`);
+  save();
+  updateAll();
+  problemTitle.textContent = t('startHint');
+  problemBody.innerHTML = '';
+}
+
+// ===== Update All =====
 function updateAll() {
   renderTop();
   renderMeta();
   renderSkills();
   renderProfileSkills();
   drawRadar();
+  renderTasks();
+  renderSide();
   renderI18n();
+  renderNotifs();
+}
+
+function renderNotifs() {
+  notifMain.innerHTML = '';
+  DB.notifs.slice(-5).forEach((n) => {
+    const li = document.createElement('li');
+    li.textContent = n;
+    notifMain.appendChild(li);
+  });
 }
 
 // ===== Buttons =====
@@ -356,6 +449,6 @@ function ensureInitial() {
 function start() {
   ensureInitial();
   updateAll();
-  loadTasks(); 
+  loadTasks();
 }
 start();
