@@ -326,7 +326,6 @@ btnBuy5.onclick=()=>{ if(DB.me.coins>=450){ DB.me.coins-=450; DB.cards.refresh+=
 function setActive(btn){ document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active') }
 btnViewDashboard.onclick=()=>{ viewDashboard.classList.remove('hidden'); viewCharacter.classList.add('hidden'); viewUpload.classList.add('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewDashboard) }
 btnViewCharacter.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.remove('hidden'); viewUpload.classList.add('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewCharacter); applyAvatar() }
-btnViewUpload.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.add('hidden'); viewUpload.classList.remove('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewUpload) }
 btnViewSettings.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.add('hidden'); viewUpload.classList.add('hidden'); viewSettings.classList.remove('hidden'); setActive(btnViewSettings); renderSettings(); drawRadar(); renderProfileSkills(); }
 btnLang.onclick=()=>{
   DB.lang = DB.lang==='zh'?'en':'zh';
