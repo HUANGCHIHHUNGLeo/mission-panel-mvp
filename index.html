@@ -1,342 +1,205 @@
-// ===== Storage helper =====
-const STORAGE_KEY = 'one_prof_mvp_step1';
-const SafeStore = (function () {
-  let ok = true;
-  try {
-    const t = '__t' + Math.random();
-    localStorage.setItem(t, '1');
-    localStorage.removeItem(t);
-  } catch (e) {
-    ok = false;
-  }
-  let mem = null;
-  return {
-    load(k) {
-      try {
-        return ok
-          ? JSON.parse(localStorage.getItem(k) || 'null')
-          : mem
-          ? JSON.parse(mem)
-          : null;
-      } catch (e) {
-        return null;
-      }
-    },
-    save(k, v) {
-      try {
-        ok
-          ? localStorage.setItem(k, JSON.stringify(v))
-          : (mem = JSON.stringify(v));
-      } catch (e) {}
-    },
-  };
-})();
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>任務面板 MVP｜修正版 v1.1</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link href="./assets/styles/main.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="stage">
+      <div class="screen">
+        <!-- Topbar -->
+        <div class="topbar">
+    <div class="navBtns">
+  <button class="navBtn active" id="btnViewDashboard">任務面板</button>
+  <button class="navBtn" id="btnViewCharacter">角色介面</button>
+  <button class="navBtn" id="btnViewSettings">個人資料</button>
+</div>
+          <div class="topStats">
+            <span class="chip" id="chipUser">Lv.1 / 0%</span>
+            <span class="chip" id="chipCoins">金幣 0</span>
+            <span class="chip" id="chipCards">刷新卡 x0</span>
+          </div>
+        </div>
 
-// ===== Level curve =====
-function needFor(level) {
-  return 100 + (Math.max(1, level) - 1) * 20;
-}
+        <!-- Mini notification -->
+        <div class="notifyMini">
+          <span class="badge">!</span>
+          <div class="ttl" id="ttlNotif">通知</div>
+          <ul id="notifMain"></ul>
+          <button class="langBtn" id="btnLang">中 / EN</button>
+        </div>
 
-// ===== DB =====
-const DEFAULT_DB = {
-  lang: 'zh',
-  me: {
-    name: '',
-    title: '學生',
-    cls: '五年級',
-    level: 1,
-    exp: 0,
-    coins: 200,
-    avatarImg: null,
-  },
-  cards: { refresh: 2 },
-  login: { streak: 0, last: 0 },
-  notifs: ['歡迎來到學習任務面板！'],
-  skills: {},
-  tasks: [],
-  side: [],
-  history: [],
-  ui: { skillPct: {} },
-  currentQ: null,
-};
-let DB = SafeStore.load(STORAGE_KEY) || JSON.parse(JSON.stringify(DEFAULT_DB));
-function save() {
-  SafeStore.save(STORAGE_KEY, DB);
-}
+        <!-- 視圖：任務面板 -->
+        <div id="viewDashboard">
+          <div class="cols">
+            <div class="panel">
+              <h2><span id="hCharacter">角色概況</span></h2>
 
-// ===== Elements =====
-const viewDashboard = document.getElementById('viewDashboard');
-const viewCharacter = document.getElementById('viewCharacter');
-const viewSettings = document.getElementById('viewSettings');
-const btnViewDashboard = document.getElementById('btnViewDashboard');
-const btnViewCharacter = document.getElementById('btnViewCharacter');
-const btnViewSettings = document.getElementById('btnViewSettings');
+              <!-- 固定顯示的四個欄位 -->
+              <div class="meta" id="meta">
+                <div><span>姓名</span><strong>-</strong></div>
+                <div><span>身分</span><strong>-</strong></div>
+                <div><span>年級</span><strong>-</strong></div>
+                <div><span>Lv.</span><strong>1</strong></div>
+              </div>
 
-const chipUser = document.getElementById('chipUser');
-const chipCoins = document.getElementById('chipCoins');
-const chipCards = document.getElementById('chipCards');
-const notifMain = document.getElementById('notifMain');
-const meta = document.getElementById('meta');
-const charXP = document.getElementById('charXP');
-const charXPNum = document.getElementById('charXPNum');
-const skillsBox = document.getElementById('skills');
-const btnLang = document.getElementById('btnLang');
-const cardCountA = document.getElementById('cardCountA');
-const avatarImg = document.getElementById('avatarImg');
-const avatarSVG = document.getElementById('avatarSVG');
+              <div class="xp">
+                <div id="lblXP">角色經驗</div>
+                <div class="bar" id="charXPWrap"><i id="charXP" data-w="0"></i></div>
+                <div id="charXPNum">0%</div>
+              </div>
 
-// 個人資料
-const btnApplyBottom = document.getElementById('btnApplyBottom');
-const btnResetBottom = document.getElementById('btnResetBottom');
-const inputName = document.getElementById('inputName');
-const selectRank = document.getElementById('selectRank');
-const radarCanvas = document.getElementById('radar');
-const profileSkillsList = document.getElementById('profileSkillsList');
+              <h2 id="hSkills">技能與經驗</h2>
+              <div id="skills"></div>
 
-// ===== i18n =====
-const I18N = {
-  zh: {
-    navDash: '任務面板',
-    navChar: '角色介面',
-    navProfile: '個人資料',
-    notif: '通知',
-    character: '角色概況',
-    apply: '套用',
-    resetAll: '重置所有資料',
-    xp: '角色經驗',
-    skills: '技能與經驗',
-    problems: '作題區',
-    startHint: '請從右側任務選擇一題開始作答',
-    daily: '核心任務',
-    dailySub: '（每日 20:00 刷新）',
-    side: '日常任務',
-    update: '更新',
-    shop: '卡片 / 商城',
-    shopDesc: '刷新卡可用於重新抽核心任務。升級與連續登入可獲得卡片。',
-    profile: '個人資料',
-    name: '姓名',
-    grade: '年級',
-    radar: '能力雷達圖',
-    skillPanel: '技能一覽',
-    applied: '已套用',
-    confirmReset: '確定重製資料？',
-    coins: '金幣',
-    cards: '刷新卡',
-  },
-  en: {
-    navDash: 'Dashboard',
-    navChar: 'Character',
-    navProfile: 'Profile',
-    notif: 'Notifications',
-    character: 'Overview',
-    apply: 'Apply',
-    resetAll: 'Reset All Data',
-    xp: 'Character EXP',
-    skills: 'Skills & EXP',
-    problems: 'Problem Area',
-    startHint: 'Pick a task on the right to start.',
-    daily: 'Daily Core',
-    dailySub: '(refresh 20:00)',
-    side: 'Side Quests',
-    update: 'Reroll',
-    shop: 'Cards / Shop',
-    shopDesc:
-      'Use refresh cards to reroll core tasks. Earn by leveling and login streaks.',
-    profile: 'Profile',
-    name: 'Name',
-    grade: 'Grade',
-    radar: 'Ability Radar',
-    skillPanel: 'Skills',
-    applied: 'Applied',
-    confirmReset: 'Reset all data?',
-    coins: 'Coins',
-    cards: 'Refresh Cards',
-  },
-};
-function t(key) {
-  return I18N[DB.lang][key] || key;
-}
+              <!-- 作題區 -->
+              <div id="problemArea" class="panel">
+                <h2 id="hProblems">作題區</h2>
+                <div id="problemBox" class="problemBox">
+                  <h3 id="problemTitle">請從右側任務選擇一題開始作答</h3>
+                  <div id="problemBody" class="problemBody"></div>
+                  <div id="problemExplain" class="msg"></div>
+                  <div id="problemMsg" class="msg"></div>
+                  <div class="problemActions">
+                    <button class="btn small" id="btnClearAns">清除</button>
+                    <button class="btn small" id="btnSubmitAns">提交</button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-function renderI18n() {
-  btnViewDashboard.textContent = t('navDash');
-  btnViewCharacter.textContent = t('navChar');
-  btnViewSettings.textContent = t('navProfile');
-  document.getElementById('ttlNotif').textContent = t('notif');
-  document.getElementById('hCharacter').textContent = t('character');
-  btnApplyBottom.textContent = t('apply');
-  btnResetBottom.textContent = t('resetAll');
-  document.getElementById('lblXP').textContent = t('xp');
-  document.getElementById('hSkills').textContent = t('skills');
-  document.getElementById('hProblems').textContent = t('problems');
-  document.getElementById('hDailySub').textContent = t('dailySub');
-  document.getElementById('hShop').textContent = t('shop');
-  document.getElementById('shopDesc').textContent = t('shopDesc');
-  document.getElementById('hProfile').textContent = t('profile');
-  document.getElementById('lblName').textContent = t('name');
-  document.getElementById('lblGrade').textContent = t('grade');
-  document.getElementById('lblRadar').textContent = t('radar');
-  document.getElementById('lblSkillPanel').textContent = t('skillPanel');
-}
+            <div style="display: grid; gap: 12px">
+              <div class="panel">
+                <h2 id="hDaily">
+                  核心任務 <span class="sm" id="hDailySub">（每日 20:00 刷新）</span>
+                  <span>
+                    <button class="btn" id="btnRefreshDaily">
+                      刷新任務（卡 x<span id="cardCountA">0</span>）
+                    </button>
+                  </span>
+                </h2>
+                <div id="tasks"></div>
+              </div>
 
-// ===== Skills =====
-const SKILL_NAMES = {
-  calc: { zh: '運算能力', en: 'Arithmetic' },
-  geom: { zh: '幾何圖形與理解', en: 'Geometry' },
-  algebra: { zh: '代數運用', en: 'Algebra' },
-  apply: { zh: '解題與應用能力', en: 'Problem Solving' },
-};
-const gradeSkillsKeys = ['calc', 'geom', 'algebra', 'apply'];
+              <div class="panel">
+                <h2 id="hSide">
+                  日常任務
+                  <span><button class="btn" id="btnRerollSide">更新</button></span>
+                </h2>
+                <div id="side"></div>
+              </div>
 
-function ensureSkills() {
-  gradeSkillsKeys.forEach((k) => {
-    if (!DB.skills[k])
-      DB.skills[k] = { name: SKILL_NAMES[k], xp: 0, lvl: 1, unlocked: true };
-  });
-}
+              <div class="panel">
+                <h2 id="hShop">卡片 / 商城</h2>
+                <div class="sm" id="shopDesc">
+                  刷新卡可用於重新抽核心任務。升級與連續登入可獲得卡片。
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap">
+                  <button class="btn" id="btnBuy1">買刷新卡 x1（100 金幣）</button>
+                  <button class="btn" id="btnBuy5">買刷新卡 x5（450 金幣）</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-// ===== Renders =====
-function renderTop() {
-  chipUser.textContent = `Lv.${DB.me.level} / ${Math.floor(
-    (DB.me.exp / needFor(DB.me.level)) * 100
-  )}%`;
-  chipCoins.textContent = `${t('coins')} ${DB.me.coins}`;
-  chipCards.textContent = `${t('cards')} x${DB.cards.refresh}`;
-}
+      <!-- 視圖：角色介面（已合併上傳功能） -->
+<div id="viewCharacter" class="hidden">
+  <div class="charStage">
+    <div class="charRing"></div>
+    <div class="charWrap" id="charWrap">
+      <img id="avatarImg" class="avatar hidden" alt="角色圖片" />
+      <svg id="avatarSVG" class="avatar" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" aria-label="預設角色">
+        <defs>
+          <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#8b4a4a" />
+            <stop offset="1" stop-color="#b46868" />
+          </linearGradient>
+          <radialGradient id="eye" cx="0.5" cy="0.5" r="0.6">
+            <stop offset="0" stop-color="#fff176" />
+            <stop offset="0.5" stop-color="#ff7043" />
+            <stop offset="1" stop-color="#d32f2f" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="128" cy="96" rx="96" ry="76" fill="url(#hair)" />
+        <circle cx="128" cy="112" r="52" fill="#ffe5d9" stroke="#d9a39a" stroke-width="2" />
+        <ellipse cx="104" cy="116" rx="18" ry="20" fill="url(#eye)" />
+        <ellipse cx="152" cy="116" rx="18" ry="20" fill="url(#eye)" />
+        <path d="M112 136c6 8 26 8 32 0" stroke="#d84315" stroke-width="4" fill="none" stroke-linecap="round" />
+        <path d="M86 168h84c10 0 18 8 18 18v14c0 6-4 10-10 12-30 10-60 10-100 0-6-2-10-6-10-12v-14c0-10 8-18 18-18z" fill="#e8f0ff" stroke="#9ecbff" stroke-width="2" />
+      </svg>
+    </div>
+  </div>
 
-function renderMeta() {
-  meta.innerHTML = `
-    <div><span>${t('name')}</span><strong>${DB.me.name || '-'}</strong></div>
-    <div><span>身分</span><strong>${DB.me.title}</strong></div>
-    <div><span>${t('grade')}</span><strong>${DB.me.cls}</strong></div>
-    <div><span>Lv.</span><strong>${DB.me.level}</strong></div>
-  `;
-  const pct = Math.floor((DB.me.exp / needFor(DB.me.level)) * 100);
-  charXP.style.width = pct + '%';
-  charXPNum.textContent = pct + '%';
-}
+  <!-- 上傳功能整合進來 -->
+  <div class="panel uploadPanel" style="margin-top: 16px;">
+    <h2 id="hUpload">角色圖片管理</h2>
+    <div class="field">
+      <label id="lblChoose">選擇圖片</label>
+      <input type="file" id="avatarInput" accept="image/*" />
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+      <button class="btn" id="btnApplyAvatar">套用至角色介面</button>
+      <button class="btn" id="btnClearAvatar">移除自訂圖片</button>
+    </div>
+    <div class="sm" style="opacity: 0.8; margin-top: 6px" id="uploadHint">
+      圖片將以 base64 儲存於本機（localStorage），不會上傳到網路。
+    </div>
+  </div>
+</div>
 
-function renderSkills() {
-  skillsBox.innerHTML = '';
-  gradeSkillsKeys.forEach((k) => {
-    const s = DB.skills[k];
-    const pct = Math.floor((s.xp / needFor(s.lvl)) * 100);
-    const div = document.createElement('div');
-    div.className = 'stat';
-    div.innerHTML = `
-      <span class="skillName">${s.name[DB.lang]} <span class="lv">Lv${s.lvl}</span></span>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-      <span class="val">${pct}%</span>
-    `;
-    skillsBox.appendChild(div);
-  });
-}
+        <!-- 視圖：個人資料 -->
+        <div id="viewSettings" class="hidden">
+          <div class="panel">
+            <h2 id="hProfile">個人資料</h2>
+            <div class="meta" id="metaSettings"></div>
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 8px"
+            >
+              <div class="field">
+                <label id="lblName">姓名</label>
+                <input id="inputName" placeholder="" />
+              </div>
+              <div class="field">
+                <label id="lblGrade">年級</label>
+                <select id="selectRank">
+                  <option>五年級</option>
+                  <option>六年級</option>
+                  <option>國一生</option>
+                  <option>國二生</option>
+                  <option>國三生</option>
+                </select>
+              </div>
+            </div>
 
-function renderProfileSkills() {
-  profileSkillsList.innerHTML = '';
-  gradeSkillsKeys.forEach((k) => {
-    const s = DB.skills[k];
-    const pct = Math.floor((s.xp / needFor(s.lvl)) * 100);
-    const div = document.createElement('div');
-    div.className = 'stat';
-    div.innerHTML = `
-      <span class="skillName">${s.name[DB.lang]} Lv${s.lvl}</span>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-      <span class="val">${pct}%</span>
-    `;
-    profileSkillsList.appendChild(div);
-  });
-}
+            <!-- 技能面板 + 雷達圖 -->
+            <div id="profileWrap">
+              <div class="radarPanel">
+                <h3 id="lblRadar">能力雷達圖</h3>
+                <canvas id="radar" width="320" height="220"></canvas>
+              </div>
+              <div id="profileSkills">
+                <h3 id="lblSkillPanel">技能一覽</h3>
+                <div id="profileSkillsList"></div>
+              </div>
+            </div>
 
-function drawRadar() {
-  const ctx = radarCanvas.getContext('2d');
-  ctx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
-  const centerX = radarCanvas.width / 2;
-  const centerY = radarCanvas.height / 2;
-  const maxR = 80;
-  const values = gradeSkillsKeys.map(
-    (k) => DB.skills[k].xp / needFor(DB.skills[k].lvl)
-  );
-  ctx.strokeStyle = '#62c8ff';
-  ctx.beginPath();
-  values.forEach((v, i) => {
-    const angle = (Math.PI * 2 * i) / values.length - Math.PI / 2;
-    const r = maxR * v;
-    const x = centerX + Math.cos(angle) * r;
-    const y = centerY + Math.sin(angle) * r;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.closePath();
-  ctx.stroke();
-}
+            <!-- 套用 / 重置 -->
+            <div style="margin-top: 16px; display: flex; gap: 8px;">
+              <button class="btn" id="btnApplyBottom">套用</button>
+              <button class="btn" id="btnResetBottom">重置所有資料</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-function updateAll() {
-  renderTop();
-  renderMeta();
-  renderSkills();
-  renderProfileSkills();
-  drawRadar();
-  renderI18n();
-}
-
-// ===== Buttons =====
-btnApplyBottom.onclick = () => {
-  DB.me.name = (inputName.value || '').trim();
-  DB.me.cls = selectRank.value;
-  save();
-  updateAll();
-  inputName.blur();
-  alert(t('applied'));
-};
-
-btnResetBottom.onclick = () => {
-  if (confirm(t('confirmReset'))) {
-    localStorage.removeItem(STORAGE_KEY);
-    DB = JSON.parse(JSON.stringify(DEFAULT_DB));
-    save();
-    location.reload();
-  }
-};
-
-btnLang.onclick = () => {
-  DB.lang = DB.lang === 'zh' ? 'en' : 'zh';
-  save();
-  updateAll();
-};
-
-// ===== Views =====
-function setActive(btn) {
-  document.querySelectorAll('.navBtn').forEach((b) =>
-    b.classList.remove('active')
-  );
-  btn.classList.add('active');
-}
-btnViewDashboard.onclick = () => {
-  viewDashboard.classList.remove('hidden');
-  viewCharacter.classList.add('hidden');
-  viewSettings.classList.add('hidden');
-  setActive(btnViewDashboard);
-  updateAll();
-};
-btnViewCharacter.onclick = () => {
-  viewDashboard.classList.add('hidden');
-  viewCharacter.classList.remove('hidden');
-  viewSettings.classList.add('hidden');
-  setActive(btnViewCharacter);
-};
-btnViewSettings.onclick = () => {
-  viewDashboard.classList.add('hidden');
-  viewCharacter.classList.add('hidden');
-  viewSettings.classList.remove('hidden');
-  setActive(btnViewSettings);
-  updateAll();
-};
-
-// ===== Init =====
-function ensureInitial() {
-  ensureSkills();
-}
-function start() {
-  ensureInitial();
-  updateAll();
-}
-start();
+    <script defer src="./assets/scripts/app.js"></script>
+  </body>
+</html>
