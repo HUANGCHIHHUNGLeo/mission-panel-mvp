@@ -43,8 +43,11 @@ const btnLang=document.getElementById('btnLang');
 const cardCountA=document.getElementById('cardCountA');
 const avatarImg=document.getElementById('avatarImg');
 const avatarSVG=document.getElementById('avatarSVG');
-const btnApplyTop=document.getElementById('btnApplyTop');
-const btnResetTop=document.getElementById('btnResetTop');
+
+// 🔽 改成抓新的按鈕 ID（個人資料底部）
+const btnApplyBottom=document.getElementById('btnApplyBottom');
+const btnResetBottom=document.getElementById('btnResetBottom');
+
 // Problem area
 const problemTitle=document.getElementById('problemTitle');
 const problemBody=document.getElementById('problemBody');
@@ -107,8 +110,9 @@ function renderI18n(){
   btnViewUpload.textContent=t('navUpload'); btnViewSettings.textContent=t('navProfile');
   document.getElementById('ttlNotif').textContent=t('notif');
   document.getElementById('hCharacter').textContent=t('character');
-  document.getElementById('btnApplyTop').textContent=t('apply');
-  document.getElementById('btnResetTop').textContent=t('resetAll');
+  // 🔽 這裡不用再設 btnApplyTop / btnResetTop，因為改成 bottom
+  if(btnApplyBottom) btnApplyBottom.textContent=t('apply');
+  if(btnResetBottom) btnResetBottom.textContent=t('resetAll');
   document.getElementById('lblXP').textContent=t('xp');
   document.getElementById('hSkills').textContent=t('skills');
   document.getElementById('hProblems').textContent=t('problems');
@@ -133,19 +137,21 @@ function renderI18n(){
   document.getElementById('btnSubmitAns').textContent=t('submit');
 }
 function addNotif(msg){DB.notifs.push(msg);renderNotifs();save()}
-// ===== Skills =====
-const SKILL_NAMES={
-  calc: L('運算能力','Arithmetic Skills'),
-  geom: L('幾何圖形與理解','Geometry & Shapes'),
-  algebra: L('代數運用','Algebra'),
-  apply: L('解題與應用能力','Problem Application')
-};
-const gradeSkillsKeys=['calc','geom','algebra','apply'];
-function ensureSkills(){
-  gradeSkillsKeys.forEach(k=>{
-    if(!DB.skills[k]) DB.skills[k]={name:SKILL_NAMES[k], xp:0, lvl:1, unlocked:true};
-  });
-}
+
+// === Apply/Reset 移到 Profile page bottom ===
+btnApplyBottom && (btnApplyBottom.onclick=()=>{
+  DB.me.name=(inputName.value||'').trim();
+  const old=DB.me.cls; DB.me.cls=selectRank.value;
+  if(DB.me.cls!==old){ addNotif(DB.lang==='zh'?`切換年級：${DB.me.cls}`:`Grade -> ${DB.me.cls}`) }
+  save(); updateAll(); alert(t('applied'));
+});
+btnResetBottom && (btnResetBottom.onclick=()=>{
+  if(confirm(DB.lang==='zh'?t('confirmReset'):t('confirmResetEn'))){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    DB=JSON.parse(JSON.stringify(DEFAULT_DB)); save(); location.reload();
+  }
+});
+
 // ===== 題庫 + 解答邏輯 =====
 const dailyPool=[
   {id:'d1', title:L('計算：1+2=？','Compute 1+2=?'), skill:'calc', xp:10, q:{type:'fill', prompt:L('1 + 2 = _____','1 + 2 = _____'), answer:'3'}},
