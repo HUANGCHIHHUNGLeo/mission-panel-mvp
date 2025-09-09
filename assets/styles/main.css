@@ -550,3 +550,16 @@ input:focus, select:focus {
   border-color: #62c8ff;
   box-shadow: 0 0 6px #62c8ff66;
 }
+body {
+  font-size: 14px; /* 整體字體大小 */
+}
+
+.panel h2 {
+  font-size: 15px;
+}
+
+.field input,
+.field select {
+  height: 36px;
+  font-size: 13px;
+}
