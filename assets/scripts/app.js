@@ -64,6 +64,24 @@ function save() {
   SafeStore.save(STORAGE_KEY, DB);
 }
 
+// ===== Task loader =====
+async function loadTasks() {
+  try {
+    const [coreRes, dailyRes] = await Promise.all([
+      fetch('./assets/tasks/core.json'),
+      fetch('./assets/tasks/daily.json')
+    ]);
+    const core = await coreRes.json();
+    const daily = await dailyRes.json();
+    DB.tasks = core;
+    DB.side = daily;
+    save();
+    updateAll();
+  } catch (e) {
+    console.error('載入任務失敗', e);
+  }
+}
+
 // ===== Elements =====
 const viewDashboard = document.getElementById('viewDashboard');
 const viewCharacter = document.getElementById('viewCharacter');
@@ -338,5 +356,6 @@ function ensureInitial() {
 function start() {
   ensureInitial();
   updateAll();
+  loadTasks(); 
 }
 start();
