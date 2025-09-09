@@ -1,5 +1,5 @@
 // ===== Storage helper =====
-const STORAGE_KEY = 'one_prof_mvp_v05_fullfix';
+const STORAGE_KEY = 'one_prof_mvp_v06_final';
 const SafeStore = (function () {
   let ok = true;
   try {
@@ -72,13 +72,13 @@ const viewSettings = document.getElementById('viewSettings');
 const btnViewDashboard = document.getElementById('btnViewDashboard');
 const btnViewCharacter = document.getElementById('btnViewCharacter');
 const btnViewSettings = document.getElementById('btnViewSettings');
+
 const chipUser = document.getElementById('chipUser');
 const chipCoins = document.getElementById('chipCoins');
 const chipCards = document.getElementById('chipCards');
 const notifMain = document.getElementById('notifMain');
 const meta = document.getElementById('meta');
 const charXP = document.getElementById('charXP');
-const charXPWrap = document.getElementById('charXPWrap');
 const charXPNum = document.getElementById('charXPNum');
 const skillsBox = document.getElementById('skills');
 const tasksBox = document.getElementById('tasks');
@@ -88,45 +88,20 @@ const cardCountA = document.getElementById('cardCountA');
 const avatarImg = document.getElementById('avatarImg');
 const avatarSVG = document.getElementById('avatarSVG');
 
-// 個人資料按鈕
+// 個人資料
 const btnApplyBottom = document.getElementById('btnApplyBottom');
 const btnResetBottom = document.getElementById('btnResetBottom');
-
-// Profile inputs
 const inputName = document.getElementById('inputName');
 const selectRank = document.getElementById('selectRank');
 const radarCanvas = document.getElementById('radar');
 const profileSkillsList = document.getElementById('profileSkillsList');
 
-// ===== i18n =====
-const I18N = {
-  zh: {
-    apply: '套用',
-    resetAll: '重置所有資料',
-    applied: '已套用',
-    confirmReset: '確定重製資料？',
-    coins: '金幣',
-    cards: '刷新卡',
-  },
-  en: {
-    apply: 'Apply',
-    resetAll: 'Reset All Data',
-    applied: 'Applied',
-    confirmReset: 'Reset all data?',
-    coins: 'Coins',
-    cards: 'Refresh Cards',
-  },
-};
-function t(key) {
-  return I18N[DB.lang][key] || key;
-}
-
 // ===== Skills =====
 const SKILL_NAMES = {
-  calc: { zh: '運算能力', en: 'Arithmetic Skills' },
-  geom: { zh: '幾何圖形與理解', en: 'Geometry & Shapes' },
+  calc: { zh: '運算能力', en: 'Arithmetic' },
+  geom: { zh: '幾何圖形與理解', en: 'Geometry' },
   algebra: { zh: '代數運用', en: 'Algebra' },
-  apply: { zh: '解題與應用能力', en: 'Problem Application' },
+  apply: { zh: '解題與應用能力', en: 'Application' },
 };
 const gradeSkillsKeys = ['calc', 'geom', 'algebra', 'apply'];
 function ensureSkills() {
@@ -146,15 +121,15 @@ function renderTop() {
   const need = needFor(DB.me.level);
   const pct = Math.round((DB.me.exp / need) * 100);
   chipUser.textContent = `Lv.${DB.me.level} / ${pct}%`;
-  chipCoins.textContent = `${t('coins')} ${DB.me.coins}`;
-  chipCards.textContent = `${t('cards')} x${DB.cards.refresh}`;
+  chipCoins.textContent = `金幣 ${DB.me.coins}`;
+  chipCards.textContent = `刷新卡 x${DB.cards.refresh}`;
   cardCountA.textContent = DB.cards.refresh;
 }
 function renderMeta() {
   meta.innerHTML = '';
-  [[DB.lang === 'zh' ? '姓名' : 'Name', DB.me.name || '-'],
-  [DB.lang === 'zh' ? '身分' : 'Title', DB.me.title],
-  [DB.lang === 'zh' ? '年級' : 'Grade', DB.me.cls || '五年級'],
+  [['姓名', DB.me.name || '-'],
+  ['身分', DB.me.title],
+  ['年級', DB.me.cls || '五年級'],
   ['Lv.', DB.me.level]].forEach(([k, v]) => {
     const d = document.createElement('div');
     d.innerHTML = `<span>${k}</span><strong>${v}</strong>`;
@@ -169,9 +144,9 @@ function renderSkills() {
     row.className = 'stat';
     row.innerHTML = `
       <div class="skillName">
-        <span>${s.name[DB.lang]}</span><span class="lv">LV${s.lvl}</span>
+        <span>${s.name.zh}</span><span class="lv">LV${s.lvl}</span>
       </div>
-      <div class="bar"><i data-w="${pct}" style="width:${pct}%"></i></div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="val xpGold">${pct}%</div>
     `;
     skillsBox.appendChild(row);
@@ -180,35 +155,32 @@ function renderSkills() {
 function renderProfileSkills() {
   profileSkillsList.innerHTML = '';
   Object.entries(DB.skills).forEach(([key, s]) => {
-    const div = document.createElement('div');
-    div.className = 'stat';
-    div.innerHTML = `
+    const pct = s.xp;
+    const row = document.createElement('div');
+    row.className = 'stat';
+    row.innerHTML = `
       <div class="skillName">
-        <span>${s.name[DB.lang]}</span><span class="lv">LV${s.lvl}</span>
+        <span>${s.name.zh}</span><span class="lv">LV${s.lvl}</span>
       </div>
-      <div class="bar"><i data-w="${s.xp}" style="width:${s.xp}%"></i></div>
-      <div class="val xpGold">${s.xp}%</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="val xpGold">${pct}%</div>
     `;
-    profileSkillsList.appendChild(div);
+    profileSkillsList.appendChild(row);
   });
 }
 function drawRadar() {
-  const c = radarCanvas;
-  if (!c) return;
-  const ctx = c.getContext('2d');
-  const w = c.width,
-    h = c.height;
+  if (!radarCanvas) return;
+  const ctx = radarCanvas.getContext('2d');
+  const w = radarCanvas.width, h = radarCanvas.height;
   ctx.clearRect(0, 0, w, h);
-  const cx = w / 2,
-    cy = h / 2 + 10;
+  const cx = w / 2, cy = h / 2 + 10;
   const R = Math.min(w, h) / 2 - 32;
   const N = gradeSkillsKeys.length;
   const values = gradeSkillsKeys.map(
-    (k) => Math.min(1, (DB.skills[k]?.lvl || 1) / 5)
+    (k) => Math.min(1, (DB.skills[k]?.xp || 0) / 100)
   );
   ctx.strokeStyle = '#62c8ff55';
   ctx.fillStyle = '#62c8ff16';
-  ctx.lineWidth = 1;
   for (let ring = 1; ring <= 4; ring++) {
     const r = (R * ring) / 4;
     ctx.beginPath();
@@ -253,11 +225,11 @@ btnApplyBottom &&
     DB.me.cls = selectRank.value;
     save();
     updateAll();
-    alert(t('applied'));
+    alert('已套用');
   });
 btnResetBottom &&
   (btnResetBottom.onclick = () => {
-    if (confirm(t('confirmReset'))) {
+    if (confirm('確定重製資料？')) {
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch (e) {}
@@ -267,9 +239,77 @@ btnResetBottom &&
     }
   });
 
+// ===== Views =====
+function setActive(btn) {
+  document
+    .querySelectorAll('.navBtn')
+    .forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+btnViewDashboard.onclick = () => {
+  viewDashboard.classList.remove('hidden');
+  viewCharacter.classList.add('hidden');
+  viewSettings.classList.add('hidden');
+  setActive(btnViewDashboard);
+};
+btnViewCharacter.onclick = () => {
+  viewDashboard.classList.add('hidden');
+  viewCharacter.classList.remove('hidden');
+  viewSettings.classList.add('hidden');
+  setActive(btnViewCharacter);
+};
+btnViewSettings.onclick = () => {
+  viewDashboard.classList.add('hidden');
+  viewCharacter.classList.add('hidden');
+  viewSettings.classList.remove('hidden');
+  setActive(btnViewSettings);
+  updateAll();
+};
+
+// ===== Avatar Upload =====
+const avatarInput = document.getElementById('avatarInput');
+const btnApplyAvatar = document.getElementById('btnApplyAvatar');
+const btnClearAvatar = document.getElementById('btnClearAvatar');
+function applyAvatar() {
+  if (DB.me.avatarImg) {
+    avatarImg.src = DB.me.avatarImg;
+    avatarImg.classList.remove('hidden');
+    avatarSVG.classList.add('hidden');
+  } else {
+    avatarImg.src = '';
+    avatarImg.classList.add('hidden');
+    avatarSVG.classList.remove('hidden');
+  }
+}
+avatarInput &&
+  (avatarInput.onchange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      DB.me.avatarImg = ev.target.result;
+      save();
+      applyAvatar();
+    };
+    reader.readAsDataURL(file);
+  });
+btnApplyAvatar &&
+  (btnApplyAvatar.onclick = () => {
+    applyAvatar();
+    alert('角色圖片已套用');
+  });
+btnClearAvatar &&
+  (btnClearAvatar.onclick = () => {
+    DB.me.avatarImg = null;
+    save();
+    applyAvatar();
+    alert('已移除自訂圖片');
+  });
+
 // ===== Init =====
 function ensureInitial() {
   ensureSkills();
+  applyAvatar();
 }
 function start() {
   ensureInitial();
