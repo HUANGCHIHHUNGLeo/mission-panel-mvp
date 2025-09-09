@@ -110,7 +110,6 @@ function renderI18n(){
   btnViewUpload.textContent=t('navUpload'); btnViewSettings.textContent=t('navProfile');
   document.getElementById('ttlNotif').textContent=t('notif');
   document.getElementById('hCharacter').textContent=t('character');
-  // 🔽 這裡不用再設 btnApplyTop / btnResetTop，因為改成 bottom
   if(btnApplyBottom) btnApplyBottom.textContent=t('apply');
   if(btnResetBottom) btnResetBottom.textContent=t('resetAll');
   document.getElementById('lblXP').textContent=t('xp');
@@ -152,6 +151,19 @@ btnResetBottom && (btnResetBottom.onclick=()=>{
   }
 });
 
+// ===== Skills =====
+const SKILL_NAMES={
+  calc: L('運算能力','Arithmetic Skills'),
+  geom: L('幾何圖形與理解','Geometry & Shapes'),
+  algebra: L('代數運用','Algebra'),
+  apply: L('解題與應用能力','Problem Application')
+};
+const gradeSkillsKeys=['calc','geom','algebra','apply'];
+function ensureSkills(){
+  gradeSkillsKeys.forEach(k=>{
+    if(!DB.skills[k]) DB.skills[k]={name:SKILL_NAMES[k], xp:0, lvl:1, unlocked:true};
+  });
+}
 // ===== 題庫 + 解答邏輯 =====
 const dailyPool=[
   {id:'d1', title:L('計算：1+2=？','Compute 1+2=?'), skill:'calc', xp:10, q:{type:'fill', prompt:L('1 + 2 = _____','1 + 2 = _____'), answer:'3'}},
