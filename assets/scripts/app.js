@@ -22,11 +22,9 @@ function save(){SafeStore.save(STORAGE_KEY,DB)}
 // ===== Elements =====
 const viewDashboard=document.getElementById('viewDashboard');
 const viewCharacter=document.getElementById('viewCharacter');
-const viewUpload=document.getElementById('viewUpload');
 const viewSettings=document.getElementById('viewSettings');
 const btnViewDashboard=document.getElementById('btnViewDashboard');
 const btnViewCharacter=document.getElementById('btnViewCharacter');
-const btnViewUpload=document.getElementById('btnViewUpload');
 const btnViewSettings=document.getElementById('btnViewSettings');
 const chipUser=document.getElementById('chipUser');
 const chipCoins=document.getElementById('chipCoins');
