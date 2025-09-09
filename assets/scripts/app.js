@@ -324,9 +324,9 @@ btnBuy1.onclick=()=>{ if(DB.me.coins>=100){ DB.me.coins-=100; DB.cards.refresh+=
 btnBuy5.onclick=()=>{ if(DB.me.coins>=450){ DB.me.coins-=450; DB.cards.refresh+=5; addNotif(DB.lang==='zh'?'購買刷新卡 x5':'Bought x5'); updateAll()} else addNotif(DB.lang==='zh'?'金幣不足':'Not enough coins') }
 // ===== Views =====
 function setActive(btn){ document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active') }
-btnViewDashboard.onclick=()=>{ viewDashboard.classList.remove('hidden'); viewCharacter.classList.add('hidden'); viewUpload.classList.add('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewDashboard) }
-btnViewCharacter.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.remove('hidden'); viewUpload.classList.add('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewCharacter); applyAvatar() }
-btnViewSettings.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.add('hidden'); viewUpload.classList.add('hidden'); viewSettings.classList.remove('hidden'); setActive(btnViewSettings); renderSettings(); drawRadar(); renderProfileSkills(); }
+btnViewDashboard.onclick=()=>{ viewDashboard.classList.remove('hidden'); viewCharacter.classList.add('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewDashboard) }
+btnViewCharacter.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.remove('hidden'); viewSettings.classList.add('hidden'); setActive(btnViewCharacter); applyAvatar() }
+btnViewSettings.onclick=()=>{ viewDashboard.classList.add('hidden'); viewCharacter.classList.add('hidden'); viewSettings.classList.remove('hidden'); setActive(btnViewSettings); renderSettings(); drawRadar(); renderProfileSkills(); }
 btnLang.onclick=()=>{
   DB.lang = DB.lang==='zh'?'en':'zh';
   addNotif(`Lang: ${DB.lang}`); save();
@@ -355,19 +355,6 @@ function renderSettings(){
   [[t('coins'),DB.me.coins],[t('cards'),DB.cards.refresh],[DB.lang==='zh'?'登入連續天數':'Login Streak',DB.login.streak]].forEach(([k,v])=>{
     const d=document.createElement('div'); d.className='chip'; d.textContent=`${k}: ${v}`; metaS.appendChild(d)
   });
-}
-// === Apply/Reset moved to Dashboard header ===
-btnApplyTop.onclick=()=>{
-  DB.me.name=(inputName.value||'').trim();
-  const old=DB.me.cls; DB.me.cls=selectRank.value;
-  if(DB.me.cls!==old){ addNotif(DB.lang==='zh'?`切換年級：${DB.me.cls}`:`Grade -> ${DB.me.cls}`) }
-  save(); updateAll(); alert(t('applied'));
-}
-btnResetTop.onclick=()=>{
-  if(confirm(DB.lang==='zh'?t('confirmReset'):t('confirmResetEn'))){
-    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-    DB=JSON.parse(JSON.stringify(DEFAULT_DB)); save(); location.reload();
-  }
 }
 // ===== Avatar Upload / Apply =====
 avatarInput && (avatarInput.onchange=(e)=>{
