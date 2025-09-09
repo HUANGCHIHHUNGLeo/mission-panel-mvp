@@ -1,5 +1,5 @@
 // ===== Storage helper =====
-const STORAGE_KEY = 'one_prof_mvp_v06_fix';
+const STORAGE_KEY = 'one_prof_mvp_step1';
 const SafeStore = (function () {
   let ok = true;
   try {
@@ -122,7 +122,6 @@ const I18N = {
     confirmReset: '確定重製資料？',
     coins: '金幣',
     cards: '刷新卡',
-    role: '身分',
   },
   en: {
     navDash: 'Dashboard',
@@ -152,7 +151,6 @@ const I18N = {
     confirmReset: 'Reset all data?',
     coins: 'Coins',
     cards: 'Refresh Cards',
-    role: 'Role',
   },
 };
 function t(key) {
@@ -208,7 +206,7 @@ function renderTop() {
 function renderMeta() {
   meta.innerHTML = `
     <div><span>${t('name')}</span><strong>${DB.me.name || '-'}</strong></div>
-    <div><span>${t('role')}</span><strong>${DB.me.title}</strong></div>
+    <div><span>身分</span><strong>${DB.me.title}</strong></div>
     <div><span>${t('grade')}</span><strong>${DB.me.cls}</strong></div>
     <div><span>Lv.</span><strong>${DB.me.level}</strong></div>
   `;
@@ -255,47 +253,19 @@ function drawRadar() {
   const centerX = radarCanvas.width / 2;
   const centerY = radarCanvas.height / 2;
   const maxR = 80;
-
-  // 畫背景網格
-  ctx.strokeStyle = '#1a3a4d';
-  for (let step = 1; step <= 4; step++) {
-    const r = (maxR / 4) * step;
-    ctx.beginPath();
-    gradeSkillsKeys.forEach((k, i) => {
-      const angle = (Math.PI * 2 * i) / gradeSkillsKeys.length - Math.PI / 2;
-      const x = centerX + Math.cos(angle) * r;
-      const y = centerY + Math.sin(angle) * r;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.closePath();
-    ctx.stroke();
-  }
-
-  // 畫軸線
-  gradeSkillsKeys.forEach((k, i) => {
-    const angle = (Math.PI * 2 * i) / gradeSkillsKeys.length - Math.PI / 2;
-    const x = centerX + Math.cos(angle) * maxR;
-    const y = centerY + Math.sin(angle) * maxR;
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  });
-
-  // 畫數值區域
+  const values = gradeSkillsKeys.map(
+    (k) => DB.skills[k].xp / needFor(DB.skills[k].lvl)
+  );
   ctx.strokeStyle = '#62c8ff';
-  ctx.fillStyle = '#62c8ff33';
   ctx.beginPath();
-  gradeSkillsKeys.forEach((k, i) => {
-    const val = DB.skills[k].xp / needFor(DB.skills[k].lvl);
-    const r = maxR * val;
-    const angle = (Math.PI * 2 * i) / gradeSkillsKeys.length - Math.PI / 2;
+  values.forEach((v, i) => {
+    const angle = (Math.PI * 2 * i) / values.length - Math.PI / 2;
+    const r = maxR * v;
     const x = centerX + Math.cos(angle) * r;
     const y = centerY + Math.sin(angle) * r;
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.closePath();
-  ctx.fill();
   ctx.stroke();
 }
 
@@ -314,7 +284,7 @@ btnApplyBottom.onclick = () => {
   DB.me.cls = selectRank.value;
   save();
   updateAll();
-  inputName.style.background = '#0d2232'; // 改回底色
+  inputName.blur();
   alert(t('applied'));
 };
 
