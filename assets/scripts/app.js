@@ -145,12 +145,24 @@ function renderI18n(){
 function addNotif(msg){ DB.notifs.push(msg); renderNotifs(); save() }
 
 // === Apply/Reset 在 Profile 頁面 ===
-btnApplyBottom && (btnApplyBottom.onclick=()=>{
-  DB.me.name=(inputName.value||'').trim();
-  const old=DB.me.cls; DB.me.cls=selectRank.value;
-  if(DB.me.cls!==old){ addNotif(DB.lang==='zh'?`切換年級：${DB.me.cls}`:`Grade -> ${DB.me.cls}`) }
-  save(); updateAll(); alert(t('applied'));
+btnApplyBottom && (btnApplyBottom.onclick = () => {
+  // 1. 存入 DB
+  DB.me.name = (inputName.value || '').trim();
+  const old = DB.me.cls;
+  DB.me.cls = selectRank.value;
+
+  if (DB.me.cls !== old) {
+    addNotif(DB.lang === 'zh' ? `切換年級：${DB.me.cls}` : `Grade -> ${DB.me.cls}`);
+  }
+
+  // 2. 儲存 + 更新畫面
+  save();
+  updateAll();
+
+  // 3. 彈出提示
+  alert(DB.lang === 'zh' ? '已套用' : 'Applied');
 });
+
 btnResetBottom && (btnResetBottom.onclick=()=>{
   if(confirm(DB.lang==='zh'?t('confirmReset'):t('confirmResetEn'))){
     try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
