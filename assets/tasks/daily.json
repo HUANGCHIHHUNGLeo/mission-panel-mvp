@@ -1,24 +1,9 @@
 [
   {
     "id": "d1",
+    "title": { "zh": "幾何：三角形內角和=?", "en": "Geometry: Sum of angles in a triangle?" },
     "type": "fill",
-    "title": { "zh": "心算：10-7=？", "en": "Mental Math: 10-7=?" },
-    "prompt": { "zh": "10 - 7 = _____", "en": "10 - 7 = _____" },
-    "answer": "3",
-    "skill": "calc",
-    "xp": 8
-  },
-  {
-    "id": "d2",
-    "type": "mc",
-    "title": { "zh": "正方形邊數", "en": "Square sides" },
-    "prompt": { "zh": "正方形有幾條邊？", "en": "How many sides does a square have?" },
-    "options": [
-      { "zh": "3", "en": "3" },
-      { "zh": "4", "en": "4" },
-      { "zh": "5", "en": "5" }
-    ],
-    "answer": 1,
+    "answer": "180",
     "skill": "geom",
     "xp": 8
   }
