@@ -396,7 +396,7 @@ btnApplyBottom.onclick = () => {
   save();
   updateAll();
   inputName.blur();
-  alert(t('applied'));
+  setTimeout(() => alert(t('applied')), 50); // 延遲避免被 render 覆蓋
 };
 
 btnResetBottom.onclick = () => {
