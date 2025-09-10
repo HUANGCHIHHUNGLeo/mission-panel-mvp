@@ -1,33 +1,22 @@
 [
   {
     "id": "c1",
-    "type": "fill",
-    "title": { "zh": "計算：2+3=？", "en": "Compute 2+3=?" },
-    "prompt": { "zh": "2 + 3 = _____", "en": "2 + 3 = _____" },
-    "answer": "5",
+    "title": { "zh": "運算練習：2+2=?", "en": "Math Practice: 2+2=?" },
+    "type": "mc",
+    "options": [
+      { "zh": "3", "en": "3" },
+      { "zh": "4", "en": "4" },
+      { "zh": "5", "en": "5" }
+    ],
+    "answer": 2,
     "skill": "calc",
     "xp": 10
   },
   {
     "id": "c2",
-    "type": "mc",
-    "title": { "zh": "三角形內角和", "en": "Triangle angle sum" },
-    "prompt": { "zh": "三角形的內角和是多少？", "en": "What is the sum of a triangle's angles?" },
-    "options": [
-      { "zh": "90°", "en": "90°" },
-      { "zh": "180°", "en": "180°" },
-      { "zh": "270°", "en": "270°" }
-    ],
-    "answer": 1,
-    "skill": "geom",
-    "xp": 12
-  },
-  {
-    "id": "c3",
+    "title": { "zh": "填空題：5x5=?", "en": "Fill: 5x5=?" },
     "type": "fill",
-    "title": { "zh": "代數：解 x+4=9", "en": "Solve x+4=9" },
-    "prompt": { "zh": "x + 4 = _____", "en": "x + 4 = _____" },
-    "answer": "5",
+    "answer": "25",
     "skill": "algebra",
     "xp": 12
   }
