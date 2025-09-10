@@ -396,7 +396,7 @@ btnApplyBottom.onclick = () => {
   save();
   updateAll();
   inputName.blur();
-  setTimeout(() => alert(t('applied')), 50);
+ alert(t('applied'));
 };
 
 btnResetBottom.onclick = () => {
